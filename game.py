@@ -14,6 +14,7 @@ class Game(object):
         pygame.mixer.init()
         # a pygame screen object needs to be created
         self.screen = pygame.display.set_mode((WIDTH, HEIGHT))
+        pygame.display.set_caption("Asteroids")
         # set up a clock for tracking time and drawing FPS correctly
         self.clock = pygame.time.Clock()
         self.running = True
