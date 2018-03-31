@@ -4,6 +4,6 @@ from game import Game
 game = Game()
 
 while game.running:
-    game.run()
+    game.new()
 
 pygame.quit()

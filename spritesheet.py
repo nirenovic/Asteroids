@@ -9,5 +9,6 @@ class Spritesheet:
     def get_image(self, x, y, w, h):
         image = pygame.Surface((w, h))
         image.blit(self.spritesheet, (0, 0), (x, y, w, h))
+        image.set_colorkey(BLACK)
 
         return image

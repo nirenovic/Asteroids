@@ -1,6 +1,9 @@
 import pygame
 import math
 from settings import *
+from projectile import Projectile
+from text import Text
+
 Vector = pygame.math.Vector2
 
 class Player(pygame.sprite.Sprite):
@@ -18,10 +21,13 @@ class Player(pygame.sprite.Sprite):
         self.vel = Vector(0, 0)
         self.acc = Vector(0, 0)
         self.direction = 0
-        self.rotation_speed = 4
+        self.rotation_speed = 2
         self.direction_vector = Vector(0, 0)
-        self.direction_magnitude = 100
+        self.direction_magnitude = 500
         self.force_vector = Vector(0, 0)
+        self.time_since_fire = 0
+        self.vel_x_text = Text(self.game, "X velocity: " + str(self.vel.x), WHITE, None, None, None, True)
+        self.vel_y_text = Text(self.game, "Y velocity: " + str(self.vel.y), WHITE, None, None, None, True)
 
     def update(self):
         self.image = pygame.transform.rotate(self.original_image, -self.direction)
@@ -80,6 +86,18 @@ class Player(pygame.sprite.Sprite):
             self.vel += self.force_vector
         if keys[pygame.K_DOWN]:
             self.acc = -PLAYER_ACC
+        if keys[pygame.K_SPACE]:
+            self.fire()
+
+        # limit velocity
+        if self.vel.x > PLAYER_MAX_VELOCITY:
+            self.vel.x -= self.vel.x - PLAYER_MAX_VELOCITY
+        if self.vel.x < -PLAYER_MAX_VELOCITY:
+            self.vel.x -= self.vel.x + PLAYER_MAX_VELOCITY
+        if self.vel.y > PLAYER_MAX_VELOCITY:
+            self.vel.y -= self.vel.y - PLAYER_MAX_VELOCITY
+        if self.vel.y < -PLAYER_MAX_VELOCITY:
+            self.vel.y -= self.vel.y + PLAYER_MAX_VELOCITY
 
         self.pos += self.vel
 
@@ -87,15 +105,30 @@ class Player(pygame.sprite.Sprite):
         self.rect.center = self.pos
         self.acc *= PLAYER_ACC
 
+        # update texts
+        self.vel_x_text.update_text("X velocity: " + str(self.vel.x))
+        self.vel_y_text.update_text("Y velocity: " + str(self.vel.y))
 
     def draw(self):
-        pygame.draw.rect(self.game.screen, BLUE, self.original_rect, 0)
-        pygame.draw.rect(self.game.screen, GREEN, self.rect, 2)
-        pygame.draw.rect(self.game.screen, RED, self.hitbox, 1)
-        pygame.draw.line(self.game.screen, WHITE, self.rect.center,
-                        (self.rect.center[0] + (self.direction_magnitude * self.direction_vector.x),
-                         self.rect.center[1] + (self.direction_magnitude * self.direction_vector.y)), 1)
-        self.game.draw_text("X velocity: " + str(self.vel.x), WHITE)
-        self.game.draw_text("Y velocity: " + str(self.vel.y), WHITE)
-        self.game.draw_text("Dir x: " + str(self.direction_vector.x), WHITE)
-        self.game.draw_text("Dir y: " + str(self.direction_vector.y), WHITE)
+        if self.game.show_dev:
+            pygame.draw.rect(self.game.screen, BLUE, self.original_rect, 0)
+            pygame.draw.rect(self.game.screen, GREEN, self.rect, 2)
+            pygame.draw.rect(self.game.screen, RED, self.hitbox, 1)
+            pygame.draw.line(self.game.screen, WHITE, self.rect.center,
+                            (self.rect.center[0] + (self.direction_magnitude * self.direction_vector.x),
+                             self.rect.center[1] + (self.direction_magnitude * self.direction_vector.y)), 1)
+        # self.game.draw_text("Dir x: " + str(self.direction_vector.x), WHITE)
+        # self.game.draw_text("Dir y: " + str(self.direction_vector.y), WHITE)
+        # self.game.draw_text("Pos x: " + str(self.pos.x), WHITE)
+        # self.game.draw_text("Pos y: " + str(self.pos.y), WHITE)
+        # self.game.draw_text("Projectile count: " + str(len(self.game.all_projectiles)), WHITE)
+
+    def fire(self):
+        current_time = pygame.time.get_ticks()
+        if current_time - self.time_since_fire > 300:
+            self.time_since_fire = current_time
+            self.game.all_projectiles.add(Projectile(self.game, self, self.get_pos(), self.heading_point))
+
+    def get_pos(self):
+        pos = Vector(self.pos.x, self.pos.y)
+        return pos

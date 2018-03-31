@@ -5,6 +5,8 @@ from settings import *
 from os import path
 from player import Player
 from spritesheet import Spritesheet
+from asteroid import Asteroid
+from text import Text
 
 class Game(object):
     def __init__(self):
@@ -19,12 +21,11 @@ class Game(object):
         self.clock = pygame.time.Clock()
         self.running = True
         self.dir = path.dirname(__file__)
-        print(str(self.dir))
         self.load_data()
-        self.all_sprites = pygame.sprite.Group()
-        self.player = Player(self)
-        self.playing = True
+        self.min_asteroids = 5
         self.all_text = []
+        self.dev_text = []
+        self.show_dev = False
 
     def load_data(self):
         if getattr(sys, 'frozen', False):
@@ -38,6 +39,24 @@ class Game(object):
                 if self.playing:
                     self.playing = False
                 self.running = False
+            elif event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_u:
+                    if not self.show_dev:
+                        self.show_dev = True
+                    else:
+                        self.show_dev = False
+                if event.key == pygame.K_q:
+                    pygame.quit()
+        # special keys
+        # current_time = pygame.time.get_ticks()
+        # keys = pygame.key.get_pressed()
+        # if current_time - self.time_since_toggle > 500:
+        #     self.time_since_toggle = current_time
+        #     if keys[pygame.K_u]:
+        #         if not self.show_dev:
+        #             self.show_dev = True
+        #         else:
+        #             self.show_dev = False
 
     def update(self):
         self.clock.tick(FPS)
@@ -47,13 +66,39 @@ class Game(object):
                 self.running = False
         # update all sprites
         self.all_sprites.update()
+        self.all_projectiles.update()
+        self.all_asteroids.update()
+        self.check_collisions()
+        self.spawn_asteroids()
 
     def render(self):
         self.screen.fill(BLACK)
+        self.all_asteroids.draw(self.screen)
+        self.all_projectiles.draw(self.screen)
         self.player.draw()
-        self.draw_text("Angle: " + str(self.player.direction), WHITE, 16, 20, 20)
+        #self.draw_text("Angle: " + str(self.player.direction), WHITE, 16, 20, 20)
+        #self.draw_text("Asteroid count: " + str(len(self.all_asteroids)), WHITE)
+        self.draw_score()
+        for text in self.all_text:
+            if text in self.dev_text:
+                if self.show_dev:
+                    self.draw_text(text)
+            else:
+                self.draw_text(text)
         self.all_sprites.draw(self.screen)
         pygame.display.flip()
+
+    def new(self):
+        self.score = 0
+        self.time_since_toggle = 0
+        self.score_text = Text(self, str(self.score), WHITE, 30, WIDTH / 2, 20, False, False)
+        self.all_sprites = pygame.sprite.Group()
+        self.all_projectiles = pygame.sprite.Group()
+        self.all_asteroids = pygame.sprite.Group()
+        self.spawn_asteroids()
+        self.player = Player(self)
+        self.playing = True
+        self.run()
 
     def run(self):
         while(self.running):
@@ -61,23 +106,24 @@ class Game(object):
             self.update()
             self.render()
 
-    def draw_text(self, text, color, size = None, x = None, y = None):
-        if size is None:
-            size = 16
-        if x is None:
-            if len(self.all_text) > 0:
-                x = self.all_text[len(self.all_text) - 1].x
-            else:
-                x = 20
-        if y is None:
-            if len(self.all_text) > 0:
-                y = self.all_text[len(self.all_text) - 1].y + 20
-            else:
-                y = 20
-        self.font = pygame.font.SysFont('arial', size)
-        text_surface = self.font.render(text, True, color)
-        text_rect = text_surface.get_rect()
-        text_rect.x = x
-        text_rect.y = y
-        self.all_text.append(text_rect)
-        self.screen.blit(text_surface, text_rect)
+    def draw_text(self, text_object):
+        self.screen.blit(text_object.text_surface, text_object.text_rect)
+
+    def draw_score(self):
+        self.draw_text(self.score_text)
+
+    def update_score(self, amount):
+        self.score += amount
+        self.score_text = Text(self, str(self.score), WHITE, 30, WIDTH / 2, 20, False, False)
+
+    def spawn_asteroids(self):
+        while len(self.all_asteroids) < self.min_asteroids:
+            self.all_asteroids.add(Asteroid(self))
+
+    def check_collisions(self):
+        for asteroid in self.all_asteroids:
+            for projectile in self.all_projectiles:
+                if pygame.sprite.collide_rect(asteroid, projectile):
+                    asteroid.destroy()
+                    projectile.kill()
+                    self.update_score(10)
