@@ -28,6 +28,11 @@ class Player(pygame.sprite.Sprite):
         self.time_since_fire = 0
         self.vel_x_text = Text(self.game, "X velocity: " + str(self.vel.x), WHITE, None, None, None, True)
         self.vel_y_text = Text(self.game, "Y velocity: " + str(self.vel.y), WHITE, None, None, None, True)
+        self.dir_x_text = Text(self.game, "Dir x: " + str(self.direction_vector.x), WHITE, None, None, None, True)
+        self.dir_y_text = Text(self.game, "Dir y: " + str(self.direction_vector.y), WHITE, None, None, None, True)
+        self.pos_x_text = Text(self.game, "Pos x: " + str(self.pos.x), WHITE, None, None, None, True)
+        self.pos_y_text = Text(self.game, "Pos y: " + str(self.pos.y), WHITE, None, None, None, True)
+        self.projectile_count_text = Text(self.game, "Projectile count: " + str(len(self.game.all_projectiles)), WHITE, None, None, None, True)
 
     def update(self):
         self.image = pygame.transform.rotate(self.original_image, -self.direction)
@@ -68,6 +73,7 @@ class Player(pygame.sprite.Sprite):
             pygame.Rect(self.original_rect.x, self.original_rect.y,
                         self.original_rect.width + (self.original_rect.x - self.rect.x),
                         self.original_rect.height + (self.original_rect.y - self.rect.y))
+        #self.rect = self.hitbox
 
         self.direction_vector = Vector(math.sin(math.radians(self.direction)), -(math.cos(math.radians(self.direction))))
         self.heading_point = Vector(self.rect.center[0] + (self.direction_magnitude * self.direction_vector.x),
@@ -108,6 +114,11 @@ class Player(pygame.sprite.Sprite):
         # update texts
         self.vel_x_text.update_text("X velocity: " + str(self.vel.x))
         self.vel_y_text.update_text("Y velocity: " + str(self.vel.y))
+        self.dir_x_text.update_text("Dir x: " + str(self.direction_vector.x))
+        self.dir_y_text.update_text("Dir y: " + str(self.direction_vector.y))
+        self.pos_x_text.update_text("Pos x: " + str(self.pos.x))
+        self.pos_y_text.update_text("Pos y: " + str(self.pos.y))
+        self.projectile_count_text.update_text("Projectile count: " + str(len(self.game.all_projectiles)))
 
     def draw(self):
         if self.game.show_dev:
@@ -117,11 +128,6 @@ class Player(pygame.sprite.Sprite):
             pygame.draw.line(self.game.screen, WHITE, self.rect.center,
                             (self.rect.center[0] + (self.direction_magnitude * self.direction_vector.x),
                              self.rect.center[1] + (self.direction_magnitude * self.direction_vector.y)), 1)
-        # self.game.draw_text("Dir x: " + str(self.direction_vector.x), WHITE)
-        # self.game.draw_text("Dir y: " + str(self.direction_vector.y), WHITE)
-        # self.game.draw_text("Pos x: " + str(self.pos.x), WHITE)
-        # self.game.draw_text("Pos y: " + str(self.pos.y), WHITE)
-        # self.game.draw_text("Projectile count: " + str(len(self.game.all_projectiles)), WHITE)
 
     def fire(self):
         current_time = pygame.time.get_ticks()

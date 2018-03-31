@@ -1,7 +1,7 @@
 # consts
 WIDTH = 1000
 HEIGHT = 800
-FPS = 120
+FPS = 60
 
 # player properties
 PLAYER_ACC = 0.0001

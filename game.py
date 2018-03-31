@@ -7,6 +7,7 @@ from player import Player
 from spritesheet import Spritesheet
 from asteroid import Asteroid
 from text import Text
+from background import Background
 
 class Game(object):
     def __init__(self):
@@ -22,9 +23,8 @@ class Game(object):
         self.running = True
         self.dir = path.dirname(__file__)
         self.load_data()
+        self.background = Background(self)
         self.min_asteroids = 5
-        self.all_text = []
-        self.dev_text = []
         self.show_dev = False
 
     def load_data(self):
@@ -39,24 +39,16 @@ class Game(object):
                 if self.playing:
                     self.playing = False
                 self.running = False
-            elif event.type == pygame.KEYDOWN:
-                if event.key == pygame.K_u:
-                    if not self.show_dev:
-                        self.show_dev = True
-                    else:
-                        self.show_dev = False
-                if event.key == pygame.K_q:
-                    pygame.quit()
         # special keys
-        # current_time = pygame.time.get_ticks()
-        # keys = pygame.key.get_pressed()
-        # if current_time - self.time_since_toggle > 500:
-        #     self.time_since_toggle = current_time
-        #     if keys[pygame.K_u]:
-        #         if not self.show_dev:
-        #             self.show_dev = True
-        #         else:
-        #             self.show_dev = False
+        current_time = pygame.time.get_ticks()
+        keys = pygame.key.get_pressed()
+        if current_time - self.time_since_toggle > 500:
+            self.time_since_toggle = current_time
+            if keys[pygame.K_LCTRL] and keys[pygame.K_d]:
+                if not self.show_dev:
+                    self.show_dev = True
+                else:
+                    self.show_dev = False
 
     def update(self):
         self.clock.tick(FPS)
@@ -68,11 +60,13 @@ class Game(object):
         self.all_sprites.update()
         self.all_projectiles.update()
         self.all_asteroids.update()
+        self.background.update()
         self.check_collisions()
         self.spawn_asteroids()
 
     def render(self):
         self.screen.fill(BLACK)
+        self.background.draw()
         self.all_asteroids.draw(self.screen)
         self.all_projectiles.draw(self.screen)
         self.player.draw()
@@ -91,7 +85,10 @@ class Game(object):
     def new(self):
         self.score = 0
         self.time_since_toggle = 0
-        self.score_text = Text(self, str(self.score), WHITE, 30, WIDTH / 2, 20, False, False)
+        self.all_text = []
+        self.dev_text = []
+        self.score_text = Text(self, "Score: " + str(self.score), WHITE, 30, WIDTH / 2, 30, False, False)
+        self.score_text.text_rect.center = (WIDTH / 2, 30)
         self.all_sprites = pygame.sprite.Group()
         self.all_projectiles = pygame.sprite.Group()
         self.all_asteroids = pygame.sprite.Group()
@@ -114,14 +111,22 @@ class Game(object):
 
     def update_score(self, amount):
         self.score += amount
-        self.score_text = Text(self, str(self.score), WHITE, 30, WIDTH / 2, 20, False, False)
+        self.score_text = Text(self, "Score: " + str(self.score), WHITE, 30, WIDTH / 2, 30, False, False)
+        self.score_text.text_rect.center = (WIDTH / 2, 30)
 
     def spawn_asteroids(self):
         while len(self.all_asteroids) < self.min_asteroids:
             self.all_asteroids.add(Asteroid(self))
 
     def check_collisions(self):
+        # create sprite that uses player's calculated hitbox to test for accurate collision
+        player_hitbox = pygame.sprite.Sprite()
+        player_hitbox.rect = self.player.hitbox
+
         for asteroid in self.all_asteroids:
+            if pygame.sprite.collide_rect(asteroid, player_hitbox):
+                if not self.show_dev:
+                    self.new()
             for projectile in self.all_projectiles:
                 if pygame.sprite.collide_rect(asteroid, projectile):
                     asteroid.destroy()
