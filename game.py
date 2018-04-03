@@ -129,6 +129,6 @@ class Game(object):
                     self.new()
             for projectile in self.all_projectiles:
                 if pygame.sprite.collide_rect(asteroid, projectile):
-                    asteroid.destroy()
+                    asteroid.take_damage()
                     projectile.kill()
                     self.update_score(10)

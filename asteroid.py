@@ -9,9 +9,11 @@ class Asteroid(pygame.sprite.Sprite):
         pygame.sprite.Sprite.__init__(self)
         self.game = game
         self.image = game.spritesheet.get_image(218, 146, 28, 29)
+        self.original_image = game.spritesheet.get_image(218, 146, 28, 29)
+        self.original_rect = self.original_image.get_rect()
         self.rect = self.image.get_rect()
-        random_scale = random.randint(1,3)
-        self.image = pygame.transform.scale(self.image, (self.rect.width * random_scale, self.rect.height * random_scale))
+        self.hp = random.randint(1,3)
+        self.image = pygame.transform.scale(self.image, (self.rect.width * self.hp, self.rect.height * self.hp))
         self.rect = self.image.get_rect()
         self.pos = Vector(-100, -100)
         self.vel = Vector(0, 0)
@@ -22,7 +24,7 @@ class Asteroid(pygame.sprite.Sprite):
 
     def update(self):
         if self.destroyed == True:
-            self.destroy()
+            self.kill()
         self.pos += self.vel
         self.rect.center = self.pos
 
@@ -70,5 +72,11 @@ class Asteroid(pygame.sprite.Sprite):
         deltaY = heading_point.y - self.pos.y
         self.vel = Vector(deltaX * 0.002, deltaY * 0.002)
 
-    def destroy(self):
-        self.kill()
+    def take_damage(self):
+        self.hp -= 1
+        if self.hp > 0:
+            self.image = pygame.transform.scale(self.original_image, (self.original_rect.width * self.hp, self.original_rect.height * self.hp))
+            self.rect = self.image.get_rect()
+            self.rect.center = self.pos
+        else:
+            self.destroyed = True
