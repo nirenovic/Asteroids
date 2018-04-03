@@ -10,6 +10,9 @@ class Asteroid(pygame.sprite.Sprite):
         self.game = game
         self.image = game.spritesheet.get_image(218, 146, 28, 29)
         self.rect = self.image.get_rect()
+        random_scale = random.randint(1,3)
+        self.image = pygame.transform.scale(self.image, (self.rect.width * random_scale, self.rect.height * random_scale))
+        self.rect = self.image.get_rect()
         self.pos = Vector(-100, -100)
         self.vel = Vector(0, 0)
         self.rect.center = self.pos
